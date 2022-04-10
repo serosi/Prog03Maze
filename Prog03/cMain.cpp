@@ -74,6 +74,7 @@ void cMain::OnOpen(wxCommandEvent& event) {
       maze = new Maze(this, ifs);
    }
    fileDialog->Destroy(); // close the file dialog frame
+   Refresh();
 }
 
 void cMain::OnExit(wxCommandEvent& event) {

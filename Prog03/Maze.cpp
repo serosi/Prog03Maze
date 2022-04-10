@@ -1,6 +1,10 @@
 #include "Maze.h"		// Maze class specification
 #include "cMain.h"
 
+wxBEGIN_EVENT_TABLE(cMain, wxFrame)
+EVT_LEFT_DOWN(cMain::GetPt)
+wxEND_EVENT_TABLE()
+
 Maze::~Maze()
 {
 	// Now, delete our 2D arrays!
@@ -34,19 +38,6 @@ Maze::Maze(wxFrame* parent, ifstream& ifs)
 	// several important things need to happen in the constructor
 	// You need to dynamically allocate both 2D arrays (orig and solved)
 
-	orig = new char*[height];
-	for (int i = 0; i < height; i++) {
-		orig[i] = new char[width];
-	}
-
-	solved = new char*[height];
-	for (int i = 0; i < height; i++) {
-		solved[i] = new char[width];
-	} 
-	
-	// flip width and height?
-	// use member variables
-
 	// once orig has been set, don't change it - it contains the original
 	// maze data! the solved 2D array can be modified to include information
 	// about our starting point (where the user clicked) and what cells we
@@ -59,16 +50,19 @@ Maze::Maze(wxFrame* parent, ifstream& ifs)
 	wxMessageDialog* invalid = new wxMessageDialog(nullptr,
 		wxT("Invalid maze file provided."), wxT("Error"), wxOK);
 
-
-	wxMessageDialog* youarehere = new wxMessageDialog(nullptr,
-		wxT("YOU ARE HERE"), wxT("YOU ARE HERE"), wxOK);
-	wxMessageDialog* toobig = new wxMessageDialog(nullptr,
-		wxT("YOU ARE HERE"), wxT("YOU ARE HERE"), wxOK);
-
 	ifs >> width >> height;
 	if (width > MAXSIZE || height > MAXSIZE) {
-		toobig->ShowModal();
 		return; // invalid
+	}
+
+	orig = new char* [height];
+	for (int i = 0; i < height; i++) {
+		orig[i] = new char[width];
+	}
+
+	solved = new char* [height];
+	for (int i = 0; i < height; i++) {
+		solved[i] = new char[width];
 	}
 
 	for (int i = 0; i < height; i++) {
@@ -82,11 +76,9 @@ Maze::Maze(wxFrame* parent, ifstream& ifs)
 				invalid->ShowModal();
 				return; // invalid
 			}
-			youarehere->ShowModal();
 			orig[i][j] = mazeChars.at(j);
 			solved[i][j] = mazeChars.at(j);
 		}
-
 	}
 	valid = true;
 
@@ -105,8 +97,11 @@ void Maze::Solve(int xPixel, int yPixel)
 	// As part of your setup, how to we map an (x, y) pixel coordinate to one
 	// of the cells on our maze? We want to pass RecSolve() the row and col of the
 	// cell the user clicked on!
+	cMain *c = new cMain();
+	c->GetPt(event);
+
 	
-	
+	ShowSolved();
 
 
 	// force a full re-draw on the cMain wxFrame
@@ -201,7 +196,7 @@ void Maze::Show(wxPaintDC& dc)
 
 			// the rest is up to you!
 			// for every cell, you should draw a colored rectangle to 
-			// wxFrame via the "dc" devicee context variable
+			// wxFrame via the "dc" device context variable
 			// I suggest looking into the DrawRectangle function			
 			
 			dc.SetPen(*wxBLACK_PEN);
@@ -226,7 +221,9 @@ void Maze::Show(wxPaintDC& dc)
 			default:
 				valid = false;
 			}
-			dc.DrawRectangle(i * CELLSIZE, j * CELLSIZE, CELLSIZE, CELLSIZE);						 
+			dc.DrawRectangle(j * CELLSIZE, i * CELLSIZE, CELLSIZE, CELLSIZE);						 
 		}
 	}
+
+	panel->SetSize(wxDefaultCoord, wxDefaultCoord, (width * CELLSIZE)+(width*3), (height*CELLSIZE) + (height*6));
 }

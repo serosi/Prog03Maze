@@ -20,7 +20,7 @@ private:
 	void OnAbout(wxCommandEvent& event);
 	void OnOpen(wxCommandEvent& event);
 	void OnExit(wxCommandEvent& event);
-	void OnLeftClick(wxCommandEvent& event);
+	
 	// menu bar
 	wxTextCtrl* m_pTextCtrl;
 	wxMenuBar* m_pMenuBar;
@@ -33,6 +33,7 @@ private:
 
 	// public attributes of our class (and public functions)
 public:
-
+	void GetPt(wxMouseEvent& event);
+	int mouseX, mouseY;
 };
 

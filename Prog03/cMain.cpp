@@ -8,7 +8,7 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
    EVT_MENU(wxID_ABOUT, cMain::OnAbout)
    EVT_MENU(wxID_OPEN, cMain::OnOpen)
    EVT_MENU(wxID_EXIT, cMain::OnExit)
-   EVT_MENU(wxID_ANY, cMain::OnLeftClick)
+   EVT_LEFT_DOWN(cMain::GetPt)
 wxEND_EVENT_TABLE()
 
 cMain::cMain() : wxFrame(nullptr, wxID_ANY, "Program 3")
@@ -73,13 +73,15 @@ void cMain::OnOpen(wxCommandEvent& event) {
       ifs.open((const char*)selectedFile);
       maze = new Maze(this, ifs);
    }
-   fileDialog->Destroy();
+   fileDialog->Destroy(); // close the file dialog frame
 }
 
 void cMain::OnExit(wxCommandEvent& event) {
-   Destroy();
+   Destroy(); // destroy the current frame (exit program)
 }
 
-void cMain::OnLeftClick(wxCommandEvent& event) {
-
+void cMain::GetPt(wxMouseEvent& event) {
+   wxPoint mousePt = event.GetPosition();
+   mousePt.x = mouseX;
+   mousePt.y = mouseY;
 }

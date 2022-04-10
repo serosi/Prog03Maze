@@ -1,4 +1,5 @@
 #include "Maze.h"		// Maze class specification
+#include "cMain.h"
 
 Maze::~Maze()
 {
@@ -104,6 +105,9 @@ void Maze::Solve(int xPixel, int yPixel)
 	// As part of your setup, how to we map an (x, y) pixel coordinate to one
 	// of the cells on our maze? We want to pass RecSolve() the row and col of the
 	// cell the user clicked on!
+	
+	
+
 
 	// force a full re-draw on the cMain wxFrame
 	panel->Refresh();
@@ -162,9 +166,6 @@ void Maze::RecSolve(int row, int col)
 	RecSolve(row, col-1); // going left
 	RecSolve(row, col+1); // going right
 
-
-
-
 		// Again, don't change the orig 2D array, we always want a copy of the
 		// original maze data - change the solved array to indicate the starting
 		// point and all the cells visited while searching for the exit
@@ -190,50 +191,42 @@ void Maze::Show(wxPaintDC& dc)
 	if (maze2Show == nullptr) return;
 
 	// Loop through rows 
-	for (int i = 0; i < height; i++)
+	for (int i = 0; i < height; i++) // i=x
 	{
 		// Loop through columns
-		for (int j = 0; j < width; j++)
+		for (int j = 0; j < width; j++) // j=y
 		{
 			// get the current maze cell
 			char square = maze2Show[i][j];
+
+			// the rest is up to you!
+			// for every cell, you should draw a colored rectangle to 
+			// wxFrame via the "dc" devicee context variable
+			// I suggest looking into the DrawRectangle function			
 			
 			dc.SetPen(*wxBLACK_PEN);
 
 			switch (square) {
 			case OPEN:
 				dc.SetBrush(*wxWHITE_BRUSH);
-				dc.DrawRectangle(j * CELLSIZE, i * CELLSIZE, CELLSIZE, CELLSIZE);
 				break;
 			case DEADEND:
 				dc.SetBrush(*wxBLACK_BRUSH);
-				dc.DrawRectangle(j * CELLSIZE, i * CELLSIZE, CELLSIZE, CELLSIZE);
 				break;
 			case EXIT:
 				dc.SetBrush(*wxGREEN_BRUSH);
-				dc.DrawRectangle(j * CELLSIZE, i * CELLSIZE, CELLSIZE, CELLSIZE);
 				break;
 			case START:
 				dc.SetBrush(*wxRED_BRUSH);
-				dc.DrawRectangle(j * CELLSIZE, i * CELLSIZE, CELLSIZE, CELLSIZE);
 				break;
 			case VISITED:
 				dc.SetBrush(*wxBLUE_BRUSH);
-				dc.DrawRectangle(j * CELLSIZE, i * CELLSIZE, CELLSIZE, CELLSIZE);
+				
 				break;
 			default:
 				valid = false;
 			}
-
-			if (!valid)
-				break;
-
-			// the rest is up to you!
-			// for every cell, you should draw a colored rectangle to 
-			// wxFrame via the "dc" devicee context variable
-			// I suggest looking into the DrawRectangle function			
+			dc.DrawRectangle(i * CELLSIZE, j * CELLSIZE, CELLSIZE, CELLSIZE);						 
 		}
-		if (!valid)
-			break;
 	}
 }

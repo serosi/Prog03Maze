@@ -139,88 +139,30 @@ void Maze::Solve(int xPixel, int yPixel)
 	//ResetSolution();
 }
 
+
+// Recursive function to find the exit of the maze using the clicked
+// cell as a starting point. The base case is if the exit has been clicked.
+// Otherwise
 void Maze::RecSolve(int row, int col)
 {
-	// You will need some base cases and some recursive cases here!
-	// I leave it to you to think this through :)
-	// base case: check if current cell is exit
-	if (row < 0 || col < 0 || col > width - 1 || row > height - 1) return;
-
-	if (solved[row][col] == EXIT) {
+	if (solved[row][col] == EXIT)
 		free = true;
-		return;
-	}
 
-	//check adjacent cells
 	else {
 		if (solved[row][col] != START)
 			solved[row][col] = VISITED;
 
-		//bool exit = false;
+		if (row + 1 < height && ((solved[row + 1][col] == EXIT || solved[row + 1][col] == OPEN)))
+			RecSolve(row + 1, col); // going down
 
-		//if (row + 1 <= height - 1)
-		if (row + 1 < height)
-		{
-			if (solved[row + 1][col] == EXIT || solved[row + 1][col] == OPEN)
-			{
-				//row++;
-				RecSolve(row+1, col);
-				//exit = true;
-			}
-		}
+		if (row - 1 >= 0 && ((solved[row - 1][col] == EXIT || solved[row - 1][col] == OPEN)))
+			RecSolve(row - 1, col); // going up
 
-		if (row - 1 >= 0)
-		{
-			if (solved[row - 1][col] == EXIT || solved[row - 1][col] == OPEN)
-			{
-				//row--;
-				RecSolve(row-1, col);
-				//exit = true;
-			}
-		}
+		if (col + 1 < width && ((solved[row][col + 1] == EXIT || solved[row][col + 1] == OPEN)))
+			RecSolve(row, col + 1); // going right
 
-		if (col + 1 <= width - 1)
-		{
-			if (solved[row][col + 1] == EXIT || solved[row][col + 1] == OPEN)
-			{
-				//col++;
-				RecSolve(row, col+1);
-				//exit = true;
-			}
-		}
-
-		if (col - 1 >= 0)
-		{
-			if (solved[row][col - 1] == EXIT || solved[row][col - 1] == OPEN)
-			{
-				//col--;
-				RecSolve(row, col-1);
-				//exit = true;
-			}
-		}
-
-		////if (!exit) {
-		//	if (row - 1 >= 0) {
-		//		if (solved[row - 1][col] == OPEN) {
-		//			RecSolve(row - 1, col); // going up
-		//		}
-		//	}
-		//	if (row + 1 <= height - 1) {
-		//		if (solved[row + 1][col] == OPEN) {
-		//			RecSolve(row + 1, col); // going down
-		//		}
-		//	}
-		//	if (col - 1 >= 0) {
-		//		if (solved[row][col - 1] == OPEN) {
-		//			RecSolve(row, col - 1); // going left
-		//		}
-		//	}
-		//	if (col + 1 <= width - 1) {
-		//		if (solved[row][col + 1] == OPEN) {
-		//			RecSolve(row, col + 1); // going right
-		//		}
-		//	}
-		////}
+		if (col - 1 >= 0 && ((solved[row][col - 1] == EXIT || solved[row][col - 1] == OPEN)))
+			RecSolve(row, col - 1); // going left
 	}
 }
 // Copy over the solved array with the orig data
@@ -236,6 +178,12 @@ void Maze::ResetSolution()
 	}
 }
 
+// Draws the maze to the screen using a grid of size CELLSIZE squares.
+// Sets the color of the square to be different depending on what the
+// current character of the maze data file is. Walls are black, open
+// squares are white, the exit is green, the clicked cell is red, and
+// areas where the recursion has gone are blue. Also sets the size of
+// the panel to fit the provided maze file after it has been drawn.
 void Maze::Show(wxPaintDC& dc)
 {
 	// if the maze to show doesn't exist, then return

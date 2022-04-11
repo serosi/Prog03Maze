@@ -8,7 +8,7 @@ wxBEGIN_EVENT_TABLE(cMain, wxFrame)
    EVT_MENU(wxID_ABOUT, cMain::OnAbout)
    EVT_MENU(wxID_OPEN, cMain::OnOpen)
    EVT_MENU(wxID_EXIT, cMain::OnExit)
-   EVT_LEFT_DOWN(cMain::GetPt)
+   EVT_LEFT_DOWN(cMain::OnLeftClick)
 wxEND_EVENT_TABLE()
 
 cMain::cMain() : wxFrame(nullptr, wxID_ANY, "Program 3")
@@ -81,8 +81,8 @@ void cMain::OnExit(wxCommandEvent& event) {
    Destroy(); // destroy the current frame (exit program)
 }
 
-void cMain::GetPt(wxMouseEvent& event) {
+void cMain::OnLeftClick(wxMouseEvent& event) {
    wxPoint mousePt = event.GetPosition();
-   mousePt.x = mouseX;
-   mousePt.y = mouseY;
+   if (maze != nullptr)
+      maze->Solve(mousePt.x, mousePt.y);
 }

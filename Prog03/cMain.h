@@ -33,7 +33,7 @@ private:
 
 	// public attributes of our class (and public functions)
 public:
-	void GetPt(wxMouseEvent& event);
+	void OnLeftClick(wxMouseEvent& event);
 	int mouseX, mouseY;
 };
 

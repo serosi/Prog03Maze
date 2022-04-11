@@ -1,10 +1,6 @@
 #include "Maze.h"		// Maze class specification
 #include "cMain.h"
 
-wxBEGIN_EVENT_TABLE(cMain, wxFrame)
-EVT_LEFT_DOWN(cMain::GetPt)
-wxEND_EVENT_TABLE()
-
 Maze::~Maze()
 {
 	// Now, delete our 2D arrays!
@@ -48,10 +44,13 @@ Maze::Maze(wxFrame* parent, ifstream& ifs)
 	// is a valid maze file or not! (if it is valid, don't forget valid = true;)
 	// it will be helpful to set width and height (attributes of the Maze class) 
 	wxMessageDialog* invalid = new wxMessageDialog(nullptr,
-		wxT("Invalid maze file provided."), wxT("Error"), wxOK);
+		wxT("The provided maze file contains invalid characters."), wxT("Maze Error"), wxOK);
+	wxMessageDialog* tooBig = new wxMessageDialog(nullptr,
+		wxT("The provided maze file is greater than 30x30 cells."), wxT("Size Error"), wxOK);
 
 	ifs >> width >> height;
 	if (width > MAXSIZE || height > MAXSIZE) {
+		tooBig->ShowModal();
 		return; // invalid
 	}
 
@@ -97,13 +96,27 @@ void Maze::Solve(int xPixel, int yPixel)
 	// As part of your setup, how to we map an (x, y) pixel coordinate to one
 	// of the cells on our maze? We want to pass RecSolve() the row and col of the
 	// cell the user clicked on!
-	cMain *c = new cMain();
-	c->GetPt(event);
-
 	
 	ShowSolved();
+	free = false;
+	
+	if (orig[yPixel / CELLSIZE][xPixel / CELLSIZE] == EXIT) {
+		wxMessageDialog* clickedExit = new wxMessageDialog(nullptr,
+			wxT("You clicked on the exit!"), wxT("Exit found!"), wxOK);
+		clickedExit->ShowModal();
+		delete clickedExit;
+		return;
+	}
+	if (orig[yPixel / CELLSIZE][xPixel / CELLSIZE] == DEADEND) {
+		wxMessageDialog* clickedDeadEnd = new wxMessageDialog(nullptr,
+			wxT("You clicked on a dead end!"), wxT("Dead end!"), wxOK);
+		clickedDeadEnd->ShowModal();
+		delete clickedDeadEnd;
+		return;
+	}
 
-
+	RecSolve(yPixel/CELLSIZE, xPixel/CELLSIZE);
+	
 	// force a full re-draw on the cMain wxFrame
 	panel->Refresh();
 	panel->Update();
@@ -113,59 +126,76 @@ void Maze::RecSolve(int row, int col)
 {
 	// You will need some base cases and some recursive cases here!
 	// I leave it to you to think this through :)
-
 	// base case: check if current cell is exit
+	if (row < 0 || col < 0 || col > width - 1 || row > height - 1) return;
+
 	if (solved[row][col] == EXIT) {
 		free = true;
-		wxMessageDialog* clickedExit = new wxMessageDialog(nullptr,
-			wxT("You clicked on the exit!"), wxT("Exit found!"), wxOK);
-		clickedExit->ShowModal();
-		delete clickedExit;
+		wxMessageDialog* exitFound = new wxMessageDialog(nullptr,
+			wxT("Exit found!"), wxT("Exit found!"), wxOK);
+		exitFound->ShowModal();
+		delete exitFound;
 		return;
 	}
-	// other base case: current cell is deadend
-	if (solved[row][col] == DEADEND) {
-		wxMessageDialog* clickedDeadEnd = new wxMessageDialog(nullptr,
-			wxT("You clicked on a dead end!"), wxT("Dead end!"), wxOK);
-		clickedDeadEnd->ShowModal();
-		delete clickedDeadEnd;
-		return;
-	}
-	// check adjacent cells
-	if (solved[row - 1][col] == EXIT) { // going up
-		RecSolve(--row, col);
-		free = true;
-	}
-	if (solved[row + 1][col] == EXIT) { // going down
-		RecSolve(++row, col);
-		free = true;
-	}
-	if (solved[row][col - 1] == EXIT) { // going left
-		RecSolve(row, --col);
-		free = true;
-	}
-	if (solved[row][col + 1] == EXIT) { // going right
-	{
-		RecSolve(row, ++col);
-		free = true;
-	}
-	/*if (free == true) {
-		wxMessageDialog* foundExit = new wxMessageDialog(nullptr,
-			wxT("Exit was found!"), wxT("Exit found!"), wxOK);
-		foundExit->ShowModal();
-		delete foundExit;
-	}*/
-	solved[row][col] = VISITED;
-	RecSolve(row-1, col); // going up
-	RecSolve(row+1, col); // going down
-	RecSolve(row, col-1); // going left
-	RecSolve(row, col+1); // going right
 
-		// Again, don't change the orig 2D array, we always want a copy of the
-		// original maze data - change the solved array to indicate the starting
-		// point and all the cells visited while searching for the exit
+	//check adjacent cells
+	else {
+		if (solved[row][col] != START)
+			solved[row][col] = VISITED;
+
+		panel->Update();
+		panel->Refresh();
+
+		if (true) {
+			if ((solved[row - 1][col] == EXIT) || (solved[row + 1][col] == EXIT) || (solved[row][col - 1] == EXIT) || (solved[row][col + 1] == EXIT)) {
+				if (solved[row - 1][col] == EXIT) { // going up
+					row--;
+				}
+				else if (solved[row + 1][col] == EXIT) { // going down
+					row++;
+				}
+				else if (solved[row][col - 1] == EXIT) { // going left
+					col--;
+				}
+				else if (solved[row][col + 1] == EXIT) { // going right
+					col++;
+				}
+				if (row > -1 && col > -1)
+					RecSolve(row, col);
+			}
+			else {
+				if (solved[row][col] != START)
+					solved[row][col] = VISITED;
+
+				if (true) {
+					if (solved[row - 1][col] == OPEN) {
+						if (row + 1 > -1 && col > -1)
+							RecSolve(row - 1, col); // going up
+					}
+				}
+				if (true) {
+					if (solved[row + 1][col] == OPEN) {
+						if (row - 1 > -1 && col > -1)
+							RecSolve(row + 1, col); // going down
+					}
+				}
+				if (true) {
+					if (solved[row][col - 1] == OPEN) {
+						if (row > -1 && col - 1 > -1)
+							RecSolve(row, col - 1); // going left
+					}
+				}
+				if (true) {
+					if (solved[row][col + 1] == OPEN) {
+						if (row > -1 && col + 1 > -1)
+							RecSolve(row, col + 1); // going right
+					}
+				}
+			}
+		}
 	}
 }
+
 
 // Copy over the solved array with the orig data
 void Maze::ResetSolution()
@@ -225,5 +255,5 @@ void Maze::Show(wxPaintDC& dc)
 		}
 	}
 
-	panel->SetSize(wxDefaultCoord, wxDefaultCoord, (width * CELLSIZE)+(width*3), (height*CELLSIZE) + (height*6));
+	panel->SetClientSize((width * CELLSIZE), (height * CELLSIZE));
 }

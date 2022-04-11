@@ -70,7 +70,7 @@ Maze::Maze(wxFrame* parent, ifstream& ifs)
 
 		for (int j = 0; j < width; j++) {
 			if ((mazeChars.at(j) != OPEN) && (mazeChars.at(j) != DEADEND)
-				&& (mazeChars.at(j) != EXIT)) 
+				&& (mazeChars.at(j) != EXIT))
 			{
 				invalid->ShowModal();
 				return; // invalid
@@ -96,10 +96,10 @@ void Maze::Solve(int xPixel, int yPixel)
 	// As part of your setup, how to we map an (x, y) pixel coordinate to one
 	// of the cells on our maze? We want to pass RecSolve() the row and col of the
 	// cell the user clicked on!
-	
+
 	ShowSolved();
 	free = false;
-	
+
 	if (orig[yPixel / CELLSIZE][xPixel / CELLSIZE] == EXIT) {
 		wxMessageDialog* clickedExit = new wxMessageDialog(nullptr,
 			wxT("You clicked on the exit!"), wxT("Exit found!"), wxOK);
@@ -115,8 +115,8 @@ void Maze::Solve(int xPixel, int yPixel)
 		return;
 	}
 
-	RecSolve(yPixel/CELLSIZE, xPixel/CELLSIZE);
-	
+	RecSolve(yPixel / CELLSIZE, xPixel / CELLSIZE);
+
 	// force a full re-draw on the cMain wxFrame
 	panel->Refresh();
 	panel->Update();
@@ -146,12 +146,12 @@ void Maze::RecSolve(int row, int col)
 		panel->Update();
 		panel->Refresh();
 
-		if (true) {
-			if ((solved[row - 1][col] == EXIT) || (solved[row + 1][col] == EXIT) || (solved[row][col - 1] == EXIT) || (solved[row][col + 1] == EXIT)) {
-				if (solved[row - 1][col] == EXIT) { // going up
-					row--;
-				}
-				else if (solved[row + 1][col] == EXIT) { // going down
+
+		if (row == 0)
+		{
+			if ((solved[row + 1][col] == EXIT) || (solved[row][col - 1] == EXIT) || (solved[row][col + 1] == EXIT))
+			{
+				if (solved[row + 1][col] == EXIT) { // going down
 					row++;
 				}
 				else if (solved[row][col - 1] == EXIT) { // going left
@@ -163,40 +163,55 @@ void Maze::RecSolve(int row, int col)
 				if (row > -1 && col > -1)
 					RecSolve(row, col);
 			}
-			else {
-				if (solved[row][col] != START)
-					solved[row][col] = VISITED;
+		}
+		else if (row == height - 1)
+		{
+			if ((solved[row - 1][col] == EXIT) || (solved[row][col - 1] == EXIT) || (solved[row][col + 1] == EXIT))
+			{
+				if (solved[row - 1][col] == EXIT) { // going down
+					row--;
+				}
+				else if (solved[row][col - 1] == EXIT) { // going left
+					col--;
+				}
+				else if (solved[row][col + 1] == EXIT) { // going right
+					col++;
+				}
+				if (row > -1 && col > -1)
+					RecSolve(row, col);
+			}
+		}
+		else {
+			if (solved[row][col] != START)
+				solved[row][col] = VISITED;
 
-				if (true) {
-					if (solved[row - 1][col] == OPEN) {
-						if (row + 1 > -1 && col > -1)
-							RecSolve(row - 1, col); // going up
-					}
+			if (row != 0) {
+				if (solved[row - 1][col] == OPEN) {
+					//if (row > -1 && col > -1)
+					RecSolve(row - 1, col); // going up
 				}
-				if (true) {
-					if (solved[row + 1][col] == OPEN) {
-						if (row - 1 > -1 && col > -1)
-							RecSolve(row + 1, col); // going down
-					}
+			}
+			if (row != height - 1) {
+				if (solved[row + 1][col] == OPEN) {
+					//if (row > -1 && col > -1)
+					RecSolve(row + 1, col); // going down
 				}
-				if (true) {
-					if (solved[row][col - 1] == OPEN) {
-						if (row > -1 && col - 1 > -1)
-							RecSolve(row, col - 1); // going left
-					}
+			}
+			if (true) {
+				if (solved[row][col - 1] == OPEN) {
+					//if (row > -1 && col > -1)
+					RecSolve(row, col - 1); // going left
 				}
-				if (true) {
-					if (solved[row][col + 1] == OPEN) {
-						if (row > -1 && col + 1 > -1)
-							RecSolve(row, col + 1); // going right
-					}
+			}
+			if (true) {
+				if (solved[row][col + 1] == OPEN) {
+					//if (row > -1 && col > -1)
+					RecSolve(row, col + 1); // going right
 				}
 			}
 		}
 	}
 }
-
-
 // Copy over the solved array with the orig data
 void Maze::ResetSolution()
 {
@@ -228,7 +243,7 @@ void Maze::Show(wxPaintDC& dc)
 			// for every cell, you should draw a colored rectangle to 
 			// wxFrame via the "dc" device context variable
 			// I suggest looking into the DrawRectangle function			
-			
+
 			dc.SetPen(*wxBLACK_PEN);
 
 			switch (square) {
@@ -246,12 +261,12 @@ void Maze::Show(wxPaintDC& dc)
 				break;
 			case VISITED:
 				dc.SetBrush(*wxBLUE_BRUSH);
-				
+
 				break;
 			default:
 				valid = false;
 			}
-			dc.DrawRectangle(j * CELLSIZE, i * CELLSIZE, CELLSIZE, CELLSIZE);						 
+			dc.DrawRectangle(j * CELLSIZE, i * CELLSIZE, CELLSIZE, CELLSIZE);
 		}
 	}
 

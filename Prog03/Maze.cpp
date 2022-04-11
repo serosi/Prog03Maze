@@ -96,7 +96,8 @@ void Maze::Solve(int xPixel, int yPixel)
 	// As part of your setup, how to we map an (x, y) pixel coordinate to one
 	// of the cells on our maze? We want to pass RecSolve() the row and col of the
 	// cell the user clicked on!
-
+	// need to copy over solved first with the orig 2d array (fresh solution each time)
+	ResetSolution();
 	ShowSolved();
 	free = false;
 
@@ -121,18 +122,21 @@ void Maze::Solve(int xPixel, int yPixel)
 
 	if (free == true) {
 		wxMessageDialog* exitFound = new wxMessageDialog(nullptr,
-			wxT("Exit found!"), wxT("Exit found!"), wxOK);
+			wxT("Exit found!"), wxT("Exit Found"), wxOK);
 		exitFound->ShowModal();
 		delete exitFound;
+	}
+	else {
+		wxMessageDialog* exitNotFound = new wxMessageDialog(nullptr,
+			wxT("Could not find the exit."), wxT("Not Found"), wxOK);
+		exitNotFound->ShowModal();
+		delete exitNotFound;
 	}
 
 	// force a full re-draw on the cMain wxFrame
 	panel->Refresh();
 	panel->Update();
-
-	for (int i = 0; i < height; i++)
-		for (int j = 0; j < width; j++)
-			solved[j][i] = orig[j][i];
+	//ResetSolution();
 }
 
 void Maze::RecSolve(int row, int col)
@@ -144,7 +148,7 @@ void Maze::RecSolve(int row, int col)
 
 	if (solved[row][col] == EXIT) {
 		free = true;
-		//return;
+		return;
 	}
 
 	//check adjacent cells
@@ -152,70 +156,71 @@ void Maze::RecSolve(int row, int col)
 		if (solved[row][col] != START)
 			solved[row][col] = VISITED;
 
-		bool exit = false;
+		//bool exit = false;
 
-		if (row + 1 <= height - 1)
+		//if (row + 1 <= height - 1)
+		if (row + 1 < height)
 		{
-			if (solved[row + 1][col] == EXIT)
+			if (solved[row + 1][col] == EXIT || solved[row + 1][col] == OPEN)
 			{
-				row++;
-				RecSolve(row, col);
-				exit = true;
+				//row++;
+				RecSolve(row+1, col);
+				//exit = true;
 			}
 		}
 
 		if (row - 1 >= 0)
 		{
-			if (solved[row - 1][col] == EXIT)
+			if (solved[row - 1][col] == EXIT || solved[row - 1][col] == OPEN)
 			{
-				row--;
-				RecSolve(row, col);
-				exit = true;
+				//row--;
+				RecSolve(row-1, col);
+				//exit = true;
 			}
 		}
 
 		if (col + 1 <= width - 1)
 		{
-			if (solved[row][col + 1] == EXIT)
+			if (solved[row][col + 1] == EXIT || solved[row][col + 1] == OPEN)
 			{
-				col++;
-				RecSolve(row, col);
-				exit = true;
+				//col++;
+				RecSolve(row, col+1);
+				//exit = true;
 			}
 		}
 
 		if (col - 1 >= 0)
 		{
-			if (solved[row][col - 1] == EXIT)
+			if (solved[row][col - 1] == EXIT || solved[row][col - 1] == OPEN)
 			{
-				col--;
-				RecSolve(row, col);
-				exit = true;
+				//col--;
+				RecSolve(row, col-1);
+				//exit = true;
 			}
 		}
 
-		if (!exit) {
-			if (row - 1 >= 0) {
-				if (solved[row - 1][col] == OPEN) {
-					RecSolve(row - 1, col); // going up
-				}
-			}
-			if (row + 1 <= height - 1) {
-				if (solved[row + 1][col] == OPEN) {
-					RecSolve(row + 1, col); // going down
-				}
-			}
-			if (col - 1 >= 0) {
-				if (solved[row][col - 1] == OPEN) {
-					RecSolve(row, col - 1); // going left
-				}
-			}
-			if (col + 1 <= width - 1) {
-				if (solved[row][col + 1] == OPEN) {
-					RecSolve(row, col + 1); // going right
-				}
-			}
-		}
+		////if (!exit) {
+		//	if (row - 1 >= 0) {
+		//		if (solved[row - 1][col] == OPEN) {
+		//			RecSolve(row - 1, col); // going up
+		//		}
+		//	}
+		//	if (row + 1 <= height - 1) {
+		//		if (solved[row + 1][col] == OPEN) {
+		//			RecSolve(row + 1, col); // going down
+		//		}
+		//	}
+		//	if (col - 1 >= 0) {
+		//		if (solved[row][col - 1] == OPEN) {
+		//			RecSolve(row, col - 1); // going left
+		//		}
+		//	}
+		//	if (col + 1 <= width - 1) {
+		//		if (solved[row][col + 1] == OPEN) {
+		//			RecSolve(row, col + 1); // going right
+		//		}
+		//	}
+		////}
 	}
 }
 // Copy over the solved array with the orig data
@@ -245,14 +250,10 @@ void Maze::Show(wxPaintDC& dc)
 			// get the current maze cell
 			char square = maze2Show[i][j];
 
-			// the rest is up to you!
-			// for every cell, you should draw a colored rectangle to 
-			// wxFrame via the "dc" device context variable
-			// I suggest looking into the DrawRectangle function			
-
+			// set borders to black
 			dc.SetPen(*wxBLACK_PEN);
 
-			switch (square) {
+			switch (square) { // set square color based on maze character
 			case OPEN:
 				dc.SetBrush(*wxWHITE_BRUSH);
 				break;
@@ -267,14 +268,14 @@ void Maze::Show(wxPaintDC& dc)
 				break;
 			case VISITED:
 				dc.SetBrush(*wxBLUE_BRUSH);
-
 				break;
 			default:
-				valid = false;
-			}
+				valid = false; // invalid maze in any other case
+			} // draw the rectangle based on cell size
 			dc.DrawRectangle(j * CELLSIZE, i * CELLSIZE, CELLSIZE, CELLSIZE);
 		}
 	}
 
+	// resize window
 	panel->SetClientSize((width * CELLSIZE), (height * CELLSIZE));
 }

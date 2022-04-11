@@ -100,6 +100,8 @@ void Maze::Solve(int xPixel, int yPixel)
 	ShowSolved();
 	free = false;
 
+	solved[yPixel / CELLSIZE][xPixel / CELLSIZE] = START;
+
 	if (orig[yPixel / CELLSIZE][xPixel / CELLSIZE] == EXIT) {
 		wxMessageDialog* clickedExit = new wxMessageDialog(nullptr,
 			wxT("You clicked on the exit!"), wxT("Exit found!"), wxOK);
@@ -117,9 +119,20 @@ void Maze::Solve(int xPixel, int yPixel)
 
 	RecSolve(yPixel / CELLSIZE, xPixel / CELLSIZE);
 
+	if (free == true) {
+		wxMessageDialog* exitFound = new wxMessageDialog(nullptr,
+			wxT("Exit found!"), wxT("Exit found!"), wxOK);
+		exitFound->ShowModal();
+		delete exitFound;
+	}
+
 	// force a full re-draw on the cMain wxFrame
 	panel->Refresh();
 	panel->Update();
+
+	for (int i = 0; i < height; i++)
+		for (int j = 0; j < width; j++)
+			solved[j][i] = orig[j][i];
 }
 
 void Maze::RecSolve(int row, int col)
@@ -131,11 +144,7 @@ void Maze::RecSolve(int row, int col)
 
 	if (solved[row][col] == EXIT) {
 		free = true;
-		wxMessageDialog* exitFound = new wxMessageDialog(nullptr,
-			wxT("Exit found!"), wxT("Exit found!"), wxOK);
-		exitFound->ShowModal();
-		delete exitFound;
-		return;
+		//return;
 	}
 
 	//check adjacent cells
@@ -143,69 +152,66 @@ void Maze::RecSolve(int row, int col)
 		if (solved[row][col] != START)
 			solved[row][col] = VISITED;
 
-		panel->Update();
-		panel->Refresh();
+		bool exit = false;
 
-
-		if (row == 0)
+		if (row + 1 <= height - 1)
 		{
-			if ((solved[row + 1][col] == EXIT) || (solved[row][col - 1] == EXIT) || (solved[row][col + 1] == EXIT))
+			if (solved[row + 1][col] == EXIT)
 			{
-				if (solved[row + 1][col] == EXIT) { // going down
-					row++;
-				}
-				else if (solved[row][col - 1] == EXIT) { // going left
-					col--;
-				}
-				else if (solved[row][col + 1] == EXIT) { // going right
-					col++;
-				}
-				if (row > -1 && col > -1)
-					RecSolve(row, col);
+				row++;
+				RecSolve(row, col);
+				exit = true;
 			}
 		}
-		else if (row == height - 1)
+
+		if (row - 1 >= 0)
 		{
-			if ((solved[row - 1][col] == EXIT) || (solved[row][col - 1] == EXIT) || (solved[row][col + 1] == EXIT))
+			if (solved[row - 1][col] == EXIT)
 			{
-				if (solved[row - 1][col] == EXIT) { // going down
-					row--;
-				}
-				else if (solved[row][col - 1] == EXIT) { // going left
-					col--;
-				}
-				else if (solved[row][col + 1] == EXIT) { // going right
-					col++;
-				}
-				if (row > -1 && col > -1)
-					RecSolve(row, col);
+				row--;
+				RecSolve(row, col);
+				exit = true;
 			}
 		}
-		else {
-			if (solved[row][col] != START)
-				solved[row][col] = VISITED;
 
-			if (row != 0) {
+		if (col + 1 <= width - 1)
+		{
+			if (solved[row][col + 1] == EXIT)
+			{
+				col++;
+				RecSolve(row, col);
+				exit = true;
+			}
+		}
+
+		if (col - 1 >= 0)
+		{
+			if (solved[row][col - 1] == EXIT)
+			{
+				col--;
+				RecSolve(row, col);
+				exit = true;
+			}
+		}
+
+		if (!exit) {
+			if (row - 1 >= 0) {
 				if (solved[row - 1][col] == OPEN) {
-					//if (row > -1 && col > -1)
 					RecSolve(row - 1, col); // going up
 				}
 			}
-			if (row != height - 1) {
+			if (row + 1 <= height - 1) {
 				if (solved[row + 1][col] == OPEN) {
-					//if (row > -1 && col > -1)
 					RecSolve(row + 1, col); // going down
 				}
 			}
-			if (true) {
+			if (col - 1 >= 0) {
 				if (solved[row][col - 1] == OPEN) {
-					//if (row > -1 && col > -1)
 					RecSolve(row, col - 1); // going left
 				}
 			}
-			if (true) {
+			if (col + 1 <= width - 1) {
 				if (solved[row][col + 1] == OPEN) {
-					//if (row > -1 && col > -1)
 					RecSolve(row, col + 1); // going right
 				}
 			}

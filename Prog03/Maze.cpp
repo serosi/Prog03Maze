@@ -1,71 +1,59 @@
-#include "Maze.h"		// Maze class specification
-#include "cMain.h"
+#include "Maze.h"	// Maze class specification
 
 Maze::~Maze()
 {
-	// Now, delete our 2D arrays!
+	// Delete the dynamically allocated 2D arrays
 	if (orig != nullptr)
 	{
-		// how to delete a dynamically allocated 2D array?
+		for (int i = 0; i < height; i++)
+			delete[] orig[i];
+		delete[] orig;
 	}
 	if (solved != nullptr)
 	{
-		// same here :)
+		for (int i = 0; i < height; i++)
+			delete[] solved[i];
+		delete[] solved;
 	}
 }
 
+// Maze constructor
 Maze::Maze(wxFrame* parent, ifstream& ifs)
 {
-	// intialize everything here
-	// *************************
 	// initially, the maze has not been solved, so set free to false
 	free = false;
 	// initially, the maze is invalid (we haven't read anything yet)
 	valid = false;
 
 	// set the panel to the passed in frame
-	panel = parent;		// a pointer to the parent GUI element is often useful
+	panel = parent; // a pointer to the parent GUI element
 	orig = nullptr;
 	solved = nullptr;
 	maze2Show = orig;
 
-
-
-	// several important things need to happen in the constructor
-	// You need to dynamically allocate both 2D arrays (orig and solved)
-
-	// once orig has been set, don't change it - it contains the original
-	// maze data! the solved 2D array can be modified to include information
-	// about our starting point (where the user clicked) and what cells we
-	// visited while finding the exit in our maze (colored blue)
-
-	// you will also need to read from the ifstream passed to this constructor
-	// read in all the data to the orig 2D array and determine whether this
-	// is a valid maze file or not! (if it is valid, don't forget valid = true;)
-	// it will be helpful to set width and height (attributes of the Maze class) 
+	// Messages for invalid mazes
 	wxMessageDialog* invalid = new wxMessageDialog(nullptr,
 		wxT("The provided maze file contains invalid characters."), wxT("Maze Error"), wxOK);
 	wxMessageDialog* tooBig = new wxMessageDialog(nullptr,
 		wxT("The provided maze file is greater than 30x30 cells."), wxT("Size Error"), wxOK);
 
-	ifs >> width >> height;
+	ifs >> width >> height; // read in width and height
 	if (width > MAXSIZE || height > MAXSIZE) {
 		tooBig->ShowModal();
 		return; // invalid
 	}
 
-	orig = new char* [height];
+	orig = new char* [height]; // dynamically create height arrays of size width
 	for (int i = 0; i < height; i++) {
 		orig[i] = new char[width];
 	}
-
 	solved = new char* [height];
 	for (int i = 0; i < height; i++) {
 		solved[i] = new char[width];
 	}
 
 	for (int i = 0; i < height; i++) {
-		string mazeChars;
+		string mazeChars; // create string and read in characters line by line
 		ifs >> mazeChars;
 
 		for (int j = 0; j < width; j++) {
@@ -81,68 +69,72 @@ Maze::Maze(wxFrame* parent, ifstream& ifs)
 	}
 	valid = true;
 
-	// For now, select the original maze to show
-	// *NOTE: this function doesn't draw anything, it just sets the maze2Show
-	// pointer to the orig 2D array (it already should be, but just being cautious)
+	// delete message pointers
+	delete tooBig;
 	delete invalid;
+	// make sure the maze is set to show the original, unmodified maze
 	ShowOriginal();
 }
 
+
+// When the user clicks in the window and a maze object exists, this function
+// will be called. It takes in user-supplied coordinates, xPixel and yPixel, and
+// handles conditions like clicked on dead end, clicked on exit, and clicked on
+// open cell. It displays appropriate messages or calls the RecSolve function to
+// solve the maze. It will update and refresh the maze 
 void Maze::Solve(int xPixel, int yPixel)
 {
-	// You will need to setup the solution environment and then call RecSolve,
-	// your recursive maze solver function
+	// Define possible messages displayed in different function events
+	wxMessageDialog* clickedExit = new wxMessageDialog(nullptr, wxT("You clicked on the exit!"), wxT("Exit found!"), wxOK);
+	wxMessageDialog* clickedDeadEnd = new wxMessageDialog(nullptr,	wxT("You clicked on a dead end!"), wxT("Dead end!"), wxOK);
+	wxMessageDialog* exitNotFound = new wxMessageDialog(nullptr, wxT("Could not find the exit."), wxT("Not Found"), wxOK);
+	wxMessageDialog* exitFound = new wxMessageDialog(nullptr, wxT("Found the exit!"), wxT("Exit Found"), wxOK);
 
-	// As part of your setup, how to we map an (x, y) pixel coordinate to one
-	// of the cells on our maze? We want to pass RecSolve() the row and col of the
-	// cell the user clicked on!
-	// need to copy over solved first with the orig 2d array (fresh solution each time)
+	// Reset the solved maze to be the orig maze and show the solved maze
 	ResetSolution();
 	ShowSolved();
-	free = false;
+	free = false; // Not free yet
 
+	// Set clicked square to start
 	solved[yPixel / CELLSIZE][xPixel / CELLSIZE] = START;
 
+	// If exit was clicked on, display this message
 	if (orig[yPixel / CELLSIZE][xPixel / CELLSIZE] == EXIT) {
-		wxMessageDialog* clickedExit = new wxMessageDialog(nullptr,
-			wxT("You clicked on the exit!"), wxT("Exit found!"), wxOK);
 		clickedExit->ShowModal();
-		delete clickedExit;
-		return;
-	}
-	if (orig[yPixel / CELLSIZE][xPixel / CELLSIZE] == DEADEND) {
-		wxMessageDialog* clickedDeadEnd = new wxMessageDialog(nullptr,
-			wxT("You clicked on a dead end!"), wxT("Dead end!"), wxOK);
-		clickedDeadEnd->ShowModal();
-		delete clickedDeadEnd;
 		return;
 	}
 
+	// If clicked square = dead end, display this message
+	if (orig[yPixel / CELLSIZE][xPixel / CELLSIZE] == DEADEND) {
+		clickedDeadEnd->ShowModal();
+		return;
+	}
+
+	// Recursively solve the maze
 	RecSolve(yPixel / CELLSIZE, xPixel / CELLSIZE);
 
-	if (free == true) {
-		wxMessageDialog* exitFound = new wxMessageDialog(nullptr,
-			wxT("Exit found!"), wxT("Exit Found"), wxOK);
+	if (free == true) // if free, display Found Exit message
 		exitFound->ShowModal();
-		delete exitFound;
-	}
-	else {
-		wxMessageDialog* exitNotFound = new wxMessageDialog(nullptr,
-			wxT("Could not find the exit."), wxT("Not Found"), wxOK);
+	else // You clicked on a square from which the exit could not be reached
 		exitNotFound->ShowModal();
-		delete exitNotFound;
-	}
-
+		
+	
+	// Delete pointers used for displaying messages
+	delete clickedExit;
+	delete clickedDeadEnd;
+	delete exitFound;
+	delete exitNotFound;
 	// force a full re-draw on the cMain wxFrame
 	panel->Refresh();
 	panel->Update();
-	//ResetSolution();
 }
 
 
 // Recursive function to find the exit of the maze using the clicked
 // cell as a starting point. The base case is if the exit has been clicked.
-// Otherwise
+// Otherwise it sets open squares to visited which are updated to be blue
+// in the Show() function, and recursively loops through the maze until it
+// finds the exit.
 void Maze::RecSolve(int row, int col)
 {
 	if (solved[row][col] == EXIT)
@@ -165,17 +157,14 @@ void Maze::RecSolve(int row, int col)
 			RecSolve(row, col - 1); // going left
 	}
 }
+
 // Copy over the solved array with the orig data
 void Maze::ResetSolution()
 {
 	if ((orig != nullptr) && (solved != nullptr))
-	{
 		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++)
-			{
 				solved[i][j] = orig[i][j];
-			}
-	}
 }
 
 // Draws the maze to the screen using a grid of size CELLSIZE squares.
